@@ -5,26 +5,28 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
+import pro.gsilva.catalogo.model.Categoria;
 import pro.gsilva.catalogo.model.Musica;
 import pro.gsilva.catalogo.service.CatalogoService;
+import pro.gsilva.catalogo.service.CategoriaService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class CatalogoController {
-    
-    @Autowired 
-    private CatalogoService catalogoService;
 
-    @RequestMapping(value="/musicas", method=RequestMethod.GET)
+    @Autowired
+    private CatalogoService catalogoService;
+    @Autowired
+    private CategoriaService categoriaService;
+
+    @RequestMapping(value = "/musicas", method = RequestMethod.GET)
     public ModelAndView getMusicas() {
         ModelAndView mv = new ModelAndView("musicas");
         List<Musica> musicas = catalogoService.findAll();
@@ -32,7 +34,7 @@ public class CatalogoController {
         return mv;
     }
 
-    @RequestMapping(value="/musicas/{id}", method=RequestMethod.GET)
+    @RequestMapping(value = "/musicas/{id}", method = RequestMethod.GET)
     public ModelAndView getMusicaDetalhes(@PathVariable("id") long id) {
         ModelAndView mv = new ModelAndView("musicaDetalhes");
         Musica musica = catalogoService.findById(id);
@@ -41,27 +43,49 @@ public class CatalogoController {
     }
 
     @RequestMapping(value = "/musicas/edit/{id}", method = RequestMethod.GET)
-    public ModelAndView getFormEdit(@PathVariable("id") long id) {
+    public ModelAndView getMusicaFormEdit(@PathVariable("id") long id) {
         ModelAndView mv = new ModelAndView("musicaForm");
         Musica musica = catalogoService.findById(id);
         mv.addObject("musica", musica);
+        List<Categoria> listCategoria = categoriaService.findAll();
+        mv.addObject("categorias", listCategoria);
         return mv;
     }
 
-    @RequestMapping(value="/addMusica", method=RequestMethod.GET)
-    public String getMusicaForm(Musica musica) {
-        return "musicaForm";
+    @RequestMapping(value = "/addMusica", method = RequestMethod.GET)
+    public ModelAndView getMusicaForm(Musica musica) {
+        ModelAndView mv = new ModelAndView("musicaForm");
+        List<Categoria> listCategoria = categoriaService.findAll();
+        mv.addObject("categorias", listCategoria);
+        return mv;
     }
-    
-    @RequestMapping(value="/addMusica", method=RequestMethod.POST)
-    public ModelAndView salvarMusica(@Valid @ModelAttribute("musica") Musica musica, 
-           BindingResult result, Model model) {
+
+    @RequestMapping(value = "/addMusica", method = RequestMethod.POST)
+    public ModelAndView salvarMusica(@Valid @ModelAttribute("musica") Musica musica,
+            BindingResult result, Model model) {
+
         if (result.hasErrors()) {
             ModelAndView musicaForm = new ModelAndView("musicaForm");
             musicaForm.addObject("mensagem", "Verifique os errors do formulário");
+
+            List<Categoria> listCategoria = categoriaService.findAll();
+            musicaForm.addObject("categorias", listCategoria);
+
+            return musicaForm;
+            
+        } else if (musica.getCategoria().getId() == 0) {
+            ModelAndView musicaForm = new ModelAndView("musicaForm");
+            musicaForm.addObject("mensagem", "Categoria deve ser informada");
+
+            List<Categoria> listCategoria = categoriaService.findAll();
+            musicaForm.addObject("categorias", listCategoria);
+
             return musicaForm;
         }
+
         musica.setData(LocalDate.now());
+        Categoria categoria = categoriaService.findById(musica.getCategoria().getId());
+        musica.setCategoria(categoria);
         catalogoService.save(musica);
         return new ModelAndView("redirect:/musicas");
     }
@@ -73,12 +97,19 @@ public class CatalogoController {
         mv.addObject("musicas", musicas);
         return mv;
     }
-    
-    @RequestMapping(value="/delMusica/{id}", method=RequestMethod.GET)
+
+    @GetMapping("/musicas/pesquisarCategoria")
+    public ModelAndView pesquisarCategoria(@RequestParam("categoria") String categoria) {
+        ModelAndView mv = new ModelAndView("musicas");
+        List<Musica> musicas = catalogoService.findByCategoria(categoria);
+        mv.addObject("musicas", musicas);
+        return mv;
+    }
+
+    @RequestMapping(value = "/delMusica/{id}", method = RequestMethod.GET)
     public String delMusica(@PathVariable("id") long id) {
         catalogoService.excluir(id);
         return "redirect:/musicas";
     }
-        
 
 }

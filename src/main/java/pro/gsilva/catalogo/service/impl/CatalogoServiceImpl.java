@@ -38,8 +38,13 @@ public class CatalogoServiceImpl implements CatalogoService {
 
     @Override
     public List<Musica> findByTitulo(String titulo) {
-        String tituloLike = titulo + "%";
+        String tituloLike = "%" + titulo + "%";
         return catalogoRepository.findAllByTituloIsLike(tituloLike);
+    }
+
+    @Override
+    public List<Musica> findByCategoria(String categoria) {
+        return catalogoRepository.findAllByCategoriaName(categoria);
     }
 
 }
