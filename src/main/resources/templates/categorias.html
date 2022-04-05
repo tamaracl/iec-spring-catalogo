@@ -11,17 +11,24 @@
 
 <section>
     <div class="container" style="width: 60%; padding-bottom: 30px;">
+        <nav class="navbar navbar-light bg-light">
+            <a th:href="@{/addCategoria}" class="btn btn-primary" style="margin-left: 90%;" role="button">Adicionar</a>
+        </nav>
         <table class="table">
             <thead>
             <tr>
                 <th scope="col">ID</th>
                 <th scope="col">Nome</th>
+                <th scope="col" class="float-right" style="margin-right: 15%">Ações</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="categoria : ${categorias}">
                 <th scope="row" th:text="${categoria.id}"></th>
                 <td th:text="${categoria.nome}"></td>
+                <td><a th:href="@{/delCategoria/{id}(id=${categoria.id})}" class="btn btn-danger float-right" role="button">Remover</a>
+                    <a th:href="${(#mvc.url('CC#getCategoriaFormEdit').arg(0, categoria.id)).build()}" class="btn btn-primary active float-right " role="button" aria-pressed="true">Editar</a>
+                </td>
             </tr>
             </tbody>
         </table>
